@@ -5,3 +5,4 @@ organization := "net.dericbourg.advent"
 scalaVersion := "2.12.7"
 scalacOptions += "-Ypartial-unification"
 
+Testing.dependencies
