@@ -6,3 +6,5 @@ scalaVersion := "2.12.7"
 scalacOptions += "-Ypartial-unification"
 
 Testing.dependencies
+
+mainClass in (Compile, run) := Some("net.dericbourg.advent.Day32018")
