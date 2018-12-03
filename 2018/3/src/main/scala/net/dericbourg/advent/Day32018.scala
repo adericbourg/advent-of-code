@@ -5,25 +5,45 @@ import scala.util.Try
 
 object Day32018 extends App {
   val input = Source.fromResource("input.txt").getLines()
-  val result = Solver.solve(input)
 
-  println(s"Square inches of fabric are within two or more claims: $result")
+  val fabricUsage = Solver.computeFabricUsage(input)
+  val overClaims = Solver.countOverClaims(fabricUsage)
+  val nonOverlapping = Solver.findNonOverlapping(fabricUsage)
+
+  println(s"Square inches of fabric are within two or more claims: $overClaims")
+  println(s"Claims that don't overlap: ${nonOverlapping.mkString(", ")}")
 }
 
 object Solver {
-  def solve(input: Iterator[String]): Int = {
-    val fabricUsage = input
-      .flatMap(Request.parse)
-      .map(asRequestRange)
-      .foldLeft(Map.empty[Coordinates, Int]) { case (acc, range) =>
-        range.coordinates.foldLeft(acc) { case (localAcc, coordinates) =>
-          val currentCount = acc.getOrElse(coordinates, 0)
-          localAcc + (coordinates -> (currentCount + 1))
-        }
-      }
+  def countOverClaims(fabricUsage: Map[Coordinates, Usage]): Int = {
     fabricUsage
       .values
-      .count(_ >= 2)
+      .count(_.count >= 2)
+  }
+
+  def findNonOverlapping(fabricUsage: Map[Coordinates, Usage]): Set[Int] = {
+    val allClaims = fabricUsage.values.flatMap(_.ids).toSet
+    fabricUsage.values.foldLeft(allClaims) { case (claims, usage) =>
+      if (usage.count > 1) {
+        claims -- usage.ids
+      }
+      else {
+        claims
+      }
+    }
+  }
+
+  def computeFabricUsage(input: Iterator[String]): Map[Coordinates, Usage] = {
+    input
+      .flatMap(Request.parse)
+      .map(asRequestRange)
+      .foldLeft(Map.empty[Coordinates, Usage]) { case (acc, range) =>
+        range.coordinates.foldLeft(acc) { case (localAcc, coordinates) =>
+          val currentUsage = acc.getOrElse(coordinates, Usage(0, Set()))
+          val updatedUsage = currentUsage.copy(count = currentUsage.count + 1, ids = currentUsage.ids + range.id)
+          localAcc + (coordinates -> updatedUsage)
+        }
+      }
   }
 
   def asRequestRange(request: Request): RequestRange = {
@@ -55,3 +75,5 @@ object Request {
 }
 
 case class RequestRange(id: Int, coordinates: Set[Coordinates])
+
+case class Usage(count: Int, ids: Set[Int])
