@@ -21,14 +21,14 @@ object Solver {
       .sorted
       .foldLeft((Seq.empty[SleepingSlot], Option.empty[Int], Option.empty[LocalDateTime])) { case ((slots, guard, sleepBegin), event) =>
         event match {
-          case ShiftStart(_, guardId) =>
-            (slots, Some(guardId), None)
+          case ShiftStart(_, id) =>
+            (slots, Some(id), None)
           case GuardFallsAsleep(time) =>
             (slots, guard, Some(time))
           case GuardWakesUp(time) =>
             (guard, sleepBegin) match {
-              case (Some(guardId), Some(startTime)) =>
-                (slots :+ SleepingSlot(guardId, startTime, time), guard, sleepBegin)
+              case (Some(id), Some(startTime)) =>
+                (slots :+ SleepingSlot(id, startTime, time), guard, sleepBegin)
               case _ =>
                 sys.error(s"$guard | $sleepBegin")
             }
@@ -38,10 +38,19 @@ object Solver {
     val mostSleepyGuard: (Int, Duration) = findMostSleepyGuard(sleepingSlots)
     val mostSleepyMinute: Int = findMostSleepyMinuteForGuard(sleepingSlots, mostSleepyGuard._1)
 
+    println("PART 1")
     println(s"Most sleepy guard:  ${mostSleepyGuard._1} (${mostSleepyGuard._2.toMinutes} min)")
     println(s"Most sleepy minute: $mostSleepyMinute")
     println()
     println(s"Expected result: ${mostSleepyGuard._1} x $mostSleepyMinute = ${mostSleepyGuard._1 * mostSleepyMinute}")
+    println()
+
+
+    val (guardId, minute) = findGuardMostFrequentlyAsleepAtTheSameMinute(sleepingSlots)
+    println("PART 2")
+    println(s"Guard most frequently asleep on the same minute: $guardId (for minute $minute)")
+    println(s"Result is: $guardId x $minute = ${guardId * minute}")
+
   }
 
   private def findMostSleepyGuard(sleepingSlots: Seq[SleepingSlot]) = {
@@ -61,6 +70,23 @@ object Solver {
       }
     val mostSleepyMinute = sleepOccurrencePerMinute.toSeq.sortBy(_._2).reverse.map(_._1).head
     mostSleepyMinute
+  }
+
+  private def findGuardMostFrequentlyAsleepAtTheSameMinute(sleepingSlots: Seq[SleepingSlot]) = {
+    sleepingSlots
+      .flatMap { slot =>
+        slot.sleepyMinutes.map { minute =>
+          (slot.guardId, minute)
+        }
+      }
+      .foldLeft(Map.empty[(Int, Int), Int]) { case (acc, tuple) =>
+        acc + (tuple -> (acc.getOrElse(tuple, 0) + 1))
+      }
+      .toSeq
+      .sortBy(_._2)
+      .reverse
+      .head
+      ._1
   }
 }
 
