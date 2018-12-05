@@ -1,42 +1,36 @@
 package net.dericbourg.advent
 
+import scala.annotation.tailrec
 import scala.io.Source
 
 object Run extends App {
   val input = Source.fromResource("input.txt").getLines()
-  val result = Solver.solve(input)
+  val shifts = input.map(_.toInt).toList
 
+  val result = Solver.solve(shifts)
   println(s"Result: $result")
+
+  val stableFreq = Solver.findStableFrequency(shifts)
+  println(s"Stable frequency: $stableFreq")
 }
 
 object Solver {
-  private val positivePattern = "\\+([0-9]+)".r
-  private val negativePattern = "-([0-9]+)".r
 
-  sealed trait Operation {
-    def value: Int
-  }
+  def solve(input: Seq[Int]): Int = input.sum
 
-  case class Plus(value: Int) extends Operation
-
-  case class Minus(value: Int) extends Operation
-
-  def solve(input: Iterator[String]): Int = {
-    input
-      .map(asOperation)
-      .foldLeft(0) { case (total, operation) =>
-        operation match {
-          case Plus(value) => total + value
-          case Minus(value) => total - value
-        }
+  def findStableFrequency(shifts: List[Int]): Option[Int] = {
+    @tailrec
+    def find(s: Stream[Int], previous: Int, seen: Set[Int]): Option[Int] = {
+      val shift = s.head
+      val frequency = previous + shift
+      if (seen.contains(frequency)) {
+        Some(frequency)
       }
-  }
-
-  private def asOperation(string: String): Operation = {
-    string match {
-      case positivePattern(value) => Plus(value.toInt)
-      case negativePattern(value) => Minus(value.toInt)
-      case other => sys.error(s"Cannot match '$other'")
+      else {
+        find(s.tail, frequency, seen + frequency)
+      }
     }
+
+    find(Stream.continually(shifts.toStream).flatten, 0, Set.empty)
   }
 }
