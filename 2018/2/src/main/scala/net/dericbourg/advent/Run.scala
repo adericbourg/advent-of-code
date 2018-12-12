@@ -7,6 +7,11 @@ object Run extends App {
 
   val checksum = Solver.solve(input)
   println(s"Checksum: $checksum")
+
+  println("Boxes matching")
+  Solver.matchBoxes(input).foreach { comp =>
+    println(s"  ${comp.word1} with ${comp.word2}: '${comp.commonLetters}'")
+  }
 }
 
 object Solver {
@@ -32,5 +37,32 @@ object Solver {
     )
   }
 
+  def matchBoxes(input: Seq[String]): Seq[WordComparison] = {
+
+    def run(word: String, remainingWords: List[String], matchingComparisons: Seq[WordComparison]): Seq[WordComparison] = {
+
+      val compareToWord1 = compareWords(word) _
+      val matchings = remainingWords
+        .map(compareToWord1)
+        .filter(comparison => comparison.commonLetters.length == (word.length - 1))
+      remainingWords match {
+        case next :: others => run(next, others, matchingComparisons ++ matchings)
+        case Nil => matchingComparisons
+      }
+    }
+
+    input.toList match {
+      case head :: tail => run(head, tail, Seq.empty)
+      case _ => sys.error("Unexpected input")
+    }
+
+  }
+
+  private def compareWords(word1: String)(word2: String): WordComparison = {
+    val common = word1.zip(word2).filter { case (c1, c2) => c1 == c2 }.map(_._1).mkString
+    WordComparison(word1, word2, common)
+  }
+
+  case class WordComparison(word1: String, word2: String, commonLetters: String)
 
 }
