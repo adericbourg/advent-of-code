@@ -1,6 +1,7 @@
 name := """advent-of-code"""
 description := """Advent of code"""
-organization := "net.dericbourg.advent"
+
+Common.settings
 
 lazy val root = (project in file("."))
     .aggregate(advent2018)
