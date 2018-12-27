@@ -1,4 +1,4 @@
-https://adventofcode.com/2018/day/3
+https://adventofcode.com/2018/day/1
 
 --- Day 1: Chronal Calibration ---
 
